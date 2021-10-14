@@ -66,7 +66,7 @@ let currentRotation = 0
 
 //randomly select a tetromino in its first rotation
 let random = Math.floor(Math.random()*theTetrominoes.length)
-console.log(random)
+
 let current = theTetrominoes[random][currentRotation]
 
 //draw the tetromino
