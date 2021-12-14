@@ -1,276 +1,255 @@
-document.addEventListener('DOMContentLoaded', () => {
+const canvas = document.querySelector("#tetris");
+const context = canvas.getContext('2d');
+context.scale(20, 20);
 
-    const grid = document.querySelector('.grid')
-    let squares = Array.from(document.querySelectorAll('.grid div'))
-    const scoreDisplay = document.querySelector('#score')
-    const startBtn = document.querySelector('#start-button')
-    const width = 10
-    let nextRandom = 0
-    let timerId
-    let score = 0
-    const colors = [
-        '#EF4D37',
-        '#D3B04A',
-        '#CC2B8F',
-        '#3BB760',
-        '#2B5ECC'
-    ]
-    
-    //The Tetrominoes
-    const lTetromino = [
-        [1, width+1, width*2+1, 2],
-        [width, width+1, width+2, width*2+2],
-        [1, width+1, width*2+1, width*2],
-        [width, width*2, width*2+1, width*2+2]
-    ]
-    
-    const zTetromino = [
-    [0,width,width+1,width*2+1],
-    [width+1,width+2,width*2,width*2+1],
-    [0,width,width+1,width*2+1],
-    [width+1,width+2,width*2,width*2+1]
-    ]
-    
-    
-    
-    const tTetromino = [
-    [1,width,width+1,width+2],
-    [1,width+1,width+2,width*2+1],
-    [width,width+1,width+2,width*2+1],
-    [1,width,width+1,width*2+1]
-    
-    ]
-    
-    
-    const oTetromino = [
-     [0,1,width,width+1],
-     [0,1,width,width+1],
-     [0,1,width,width+1],
-     [0,1,width,width+1]
-     
-    ]
-    
-    
-    
-    const iTetromino = [
-    [1,width+1,width*2+1,width*3+1],
-    [width,width+1,width+2,width+3],
-    [1,width+1,width*2+1,width*3+1],
-    [width,width+1,width+2,width+3]
-    ]
-    
-    const theTetrominoes = [lTetromino,zTetromino,tTetromino,oTetromino,iTetromino]
-    
-    let currentPosition = 4
-    let currentRotation = 0
-    
-    //randomly select a tetromino in its first rotation
-    let random = Math.floor(Math.random()*theTetrominoes.length)
-    
-    let current = theTetrominoes[random][currentRotation]
-    
-    //draw the tetromino
-    
+
+/* MP3 sound effects */
+const move = document.querySelector("#move");
+const clear = document.querySelector("#clear");
+const gameOver = document.querySelector("#game-over");
+
+/* Pause button */
+let gamePaused = false;
+const pause = document.querySelector("#pause");
+pause.addEventListener('click', () => {
+        gamePaused = true;
+});
+
+    function arenaSweep() {
+        let rowCount = 1;
+        outer: for(let y = arena.length - 1; y > 0; y--) {
+            for (let x = 0; x < arena[y].length; x++) {
+                if (arena[y][x] === 0) {
+                    continue outer;
+                }
+            }
+            const row = arena.splice(y, 1)[0].fill(0);
+            arena.unshift(row);
+            y++;
+
+            player.score += rowCount * 10;
+            rowCount *= 2;
+            gameOver.play();
+        }
+    } 
+
+    function collide(arena, player) {
+        const [m, o] = [player.matrix, player.pos];
+        for (let y = 0; y < m.length; y++) {
+            for (let x = 0; x < m[y].length; x++) {
+                if (m[y][x] !== 0 && 
+                    (arena[y + o.y] &&
+                    arena[y + o.y][x + o.x]) !== 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+    }
+
+    function createMatrix(w, h) {
+        const matrix = [];
+        while (h--) {
+            matrix.push(new Array(w).fill(0));
+        }
+        return matrix;
+    }
+
+    function createPiece(type) {
+        if (type === 'T') {
+            return [
+                [0,0,0],
+                [1,1,1],
+                [0,1,0],
+            ];
+        } else if (type === 'O') {
+            return [
+                [2,2],
+                [2,2],
+            ];
+        } else if (type === 'L') {
+            return [
+                [0,3,0],
+                [0,3,0],
+                [0,3,3],
+            ];
+        } else if (type === 'J') {
+            return [
+                [0,4,0],
+                [0,4,0],
+                [4,4,0],
+            ];
+        } else if (type === 'I') {
+            return [
+                [0,5,0,0],
+                [0,5,0,0],
+                [0,5,0,0],
+                [0,5,0,0],
+            ];
+        } else if (type === 'S') {
+            return [
+                [0,6,6],
+                [6,6,0],
+                [0,0,0],
+            ];
+        } else if (type === 'Z') {
+            return [
+                [7,7,0],
+                [0,7,7],
+                [0,0,0],
+            ];
+        }
+    }
+
     function draw() {
-        current.forEach(index => {
-            squares[currentPosition + index].classList.add('tetromino')
-            squares[currentPosition + index].style.backgroundColor = colors[random]
-        })
-    }
-    
-    //undraw the tetromino
-    function undraw() {
-        current.forEach(index => {
-            squares[currentPosition + index].classList.remove('tetromino')
-            squares[currentPosition + index].style.backgroundColor = ''
-        })
-    
-    }
-    
-    
-    //assign functions to keyCodes 
-    
-    function control (e) {
-    if(e.keyCode === 37) {
-        moveLeft()
-    } else if (e.keyCode === 38) {
-        rotate()
-    } else if (e.keyCode === 39) {
-        moveRight()
-    } else if (e.keycode === 40) {
-        moveDown()
-    }
-    }
-    document.addEventListener('keyup', control)
-    
-    //moveDown function
-    
-    function moveDown () {
-        undraw()
-        currentPosition += width
-        draw()
-        freeze()
-    }
-    
-    //write a freeze function
-    
-    function freeze() {
-        if(current.some(index => squares[currentPosition + index + width].classList.contains('taken'))) {
-            current.forEach(index => squares[currentPosition + index].classList.add('taken'))    
-        //start a new tetromino falling
-        random = nextRandom
-        nextRandom = Math.floor(Math.random() * theTetrominoes.length)
-        current = theTetrominoes[random][currentRotation]
-        currentPosition = 4
-        draw()
-        displayShape()
-        addScore()
-        gameOver()
-    }
-    }
-    
-    //move the tetromino left unless it is at the edge or there is a blockage
-    
-    function moveLeft() {
-    undraw()
-    const isAtLeftEdge = current.some(index => (currentPosition + index) % width === 0)
-    
-    if(!isAtLeftEdge) currentPosition -=1
-    
-    if(current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-        currentPosition += 1
-    }
-    draw()
-    }
-    
-    
-    //move the tetromino right unless it is at the edge or there is a blockage
-    
-    function moveRight () {
-    undraw()
-    const isAtRightEdge = current.some(index => (currentPosition + index) % width === width-1)
-    
-    if(!isAtRightEdge) currentPosition += 1
-    
-    if(current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-        currentPosition -= 1
-    }
-    draw()
-    }
-    
-     ///FIX ROTATION OF TETROMINOS A THE EDGE 
-  function isAtRight() {
-    return current.some(index=> (currentPosition + index + 1) % width === 0)  
-  }
-  
-  function isAtLeft() {
-    return current.some(index=> (currentPosition + index) % width === 0)
-  }
-  
-  function checkRotatedPosition(P){
-    P = P || currentPosition       //get current position.  Then, check if the piece is near the left side.
-    if ((P+1) % width < 4) {         //add 1 because the position index can be 1 less than where the piece is (with how they are indexed).     
-      if (isAtRight()){            //use actual position to check if it's flipped over to right side
-        currentPosition += 1    //if so, add one to wrap it back around
-        checkRotatedPosition(P) //check again.  Pass position from start, since long block might need to move more.
-        }
-    }
-    else if (P % width > 5) {
-      if (isAtLeft()){
-        currentPosition -= 1
-      checkRotatedPosition(P)
-      }
-    }
-  }
+        context.fillStyle = '#000';
+        context.fillRect(0, 0, canvas.clientWidth, canvas.height);
 
-    //rotate the tetromino
-    
-    function rotate () {
-     undraw()
-     currentRotation ++
-     if(currentRotation === current.length) { //if the currentRotation gets to 4, make it go back to 0
-     currentRotation = 0
-     }
-     current = theTetrominoes[random][currentRotation]
-     draw()
-    }
-    
-    //show up the next tetromino in mini-grid display
-    const displaySquares = document.querySelectorAll('.mini-grid div')
-    const displayWidth = 4
-    const displayIndex = 0
-    
-    const upNextTetrominoes = [
-    [1, displayWidth+1, displayWidth*2+1, 2], //lTetromino
-    [0, displayWidth, displayWidth+1, displayWidth*2+1], //zTetromino
-    [1, displayWidth, displayWidth+1, displayWidth+2], //tTetromino
-    [0, 1, displayWidth, displayWidth+1], //oTetromino
-    [1, displayWidth+1, displayWidth*2+1, displayWidth*3+1] // iTetromino
-    ]
-    
-    //display the same shape in the mini-grid display
-    function displayShape () {
-        //remove any trace of a tetromino from the entire grid
-        displaySquares.forEach(square => {
-            square.classList.remove('tetromino')
-            square.style.backgroundColor = ''
-    })
-    upNextTetrominoes[nextRandom].forEach( index => {
-        displaySquares[displayIndex + index].classList.add('tetromino')
-        displaySquares[displayIndex + index].style.backgroundColor = colors[nextRandom]
-    })
-    }
-    
-    //add functionality to the button
-    startBtn.addEventListener('click', () => {
-    if(timerId) {
-        clearInterval(timerId)
-        timerId = null
-    } else {
-        draw()
-        timerId = setInterval(moveDown, 750)
-        nextRandom = Math.floor(Math.random() * theTetrominoes.length)
-        displayShape()
-    }
-    })
-    
-    
-    // addScore function
-    function addScore() {
-      for(let i = 0; i < 199; i += width) {
-      const row = [i+1, i+2, i+3, i+4, i+5, i+6, i+7, i+8, i+9]
-       if(row.every(index => squares[index].classList.contains('taken'))) {
-           score+=10
-           scoreDisplay.innerHTML = score
-           row.forEach(index => {
-               squares[index].classList.remove('taken')
-               squares[index].classList.remove('tetromino')
-               squares[index].style.backgroundColor = ''
-           })
-           const squaresRemoved = squares.splice(i, width)
-           squares = squaresRemoved.concat(squares)
-           squares.forEach(cell => grid.appendChild(cell))
-       }
-     }
-    }
-    
-    
-    //gameOver function
-    function gameOver () {
-        if(current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-        scoreDisplay.innerHTML = 'GAME OVER'
-        clearInterval(timerId)
-        }
+        drawMatrix(arena, {x : 0, y : 0});
+        drawMatrix(player.matrix, player.pos)
     }
 
-    function sounds () {
-        if(current.some(index => squares[currentPosition + index].classList.contains('game-over'))) {
-         let myAudio = new Audio('ES_PREL Glitch 83 - SFX Producer.mp3');
-         myAudio.play(); 
-        }
-    }
-    
-
-
-
+    function drawMatrix(matrix, offset) {
+        matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) {
+                    context.fillStyle = colors[value];
+                    context.fillRect(x + offset.x,
+                                    y + offset.y, 
+                                    1, 1)
+            }
+        });
     });
+};
+    function merge(arena, player) {
+        player.matrix.forEach((row, y) => {
+            row.forEach((value, x) => {
+                if (value !== 0) {
+                    arena[y + player.pos.y][x + player.pos.x] = value;
+                }
+            })
+        })
+    }
+    
+    function playerDrop() {
+        player.pos.y++;
+        if(collide(arena, player)) {
+            player.pos.y--;
+            merge(arena, player);
+            playerReset();
+            arenaSweep();
+            updateScore();
+        }
+        dropCounter = 0;
+    }
+    
+    function playerMove(dir) {
+            player.pos.x += dir;
+        if(collide(arena, player)) {
+            player.pos.x -= dir;
+        }
+    }
+
+    function playerReset() {
+        const pieces = 'ILJOTSZ';
+        player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+        player.pos.y = 0;
+        player.pos.x = (arena[0].length / 2 | 0) -
+                        (player.matrix[0].length / 2 | 0);
+        if(collide(arena, player)) {
+            arena.forEach(row => row.fill(0));
+            player.score = 0;
+            updateScore();
+            clear.play();
+        }
+        
+    }
+
+    function playerRotate(dir) {
+        const pos = player.pos.x;
+        let offset = 1;
+        rotate(player.matrix, dir);
+        while (collide(arena, player)) {
+            player.pos.x += offset;
+            offset = -(offset + (offset > 0 ? 1 : -1));
+            if (offset > player.matrix[0].length) {
+                rotate(player.matrix, dir);
+                player.pos.x = pos;
+                return;
+            }
+        }
+        move.play();
+    }
+
+    function rotate(matrix, dir) {
+        for (let y = 0; y < matrix.length; ++y) {
+            for (let x = 0; x < y; ++x) {
+                [
+                    matrix[x][y],
+                    matrix[y][x],
+                ] = [
+                    matrix[y][x],
+                    matrix[x][y],
+                ];
+            }
+        }
+        if (dir > 0) {
+            matrix.forEach(row => row.reverse());
+        } else {
+            matrix.reverse();
+        }
+    }
+
+    let dropCounter = 0;
+    let dropInterval = 1000;
+    let lastTime = 0; 
+    function update(time = 0) {
+        const deltaTime = time - lastTime;
+        lastTime = time;
+
+        dropCounter += deltaTime;
+        if (dropCounter > dropInterval) {
+            playerDrop();
+        }
+        draw();
+        requestAnimationFrame(update);
+    }
+
+    function updateScore() {
+        document.querySelector("#score").innerText = player.score;
+    }
+
+    const colors = [
+        null,
+        '#07F02A',
+        '#3b68f0',
+        '#ab8ff9',
+        '#f9082f',
+        '#8641e3',
+        '#F59E21',
+        '#FC09C8',
+    ];
+
+    const arena = createMatrix(12, 20);
+
+    const player = {
+        pos: {x : 0, y : 0},
+        matrix : null,
+        score : 'Score : 0',
+    }
+
+    document.addEventListener('keydown', event => {
+        if(event.key === 'ArrowLeft') {
+            playerMove(-1);
+        } else if (event.key === 'ArrowRight') {
+            playerMove(+1);
+        } else if (event.key === 'ArrowDown') {
+            playerDrop();
+        } else if (event.key === 'ArrowUp') {
+            playerRotate(-1);
+        }
+    })
+
+    playerReset();
+    updateScore();
+    update();
