@@ -158,7 +158,7 @@ pause.addEventListener('click', () => {
                         (player.matrix[0].length / 2 | 0);
         if(collide(arena, player)) {
             arena.forEach(row => row.fill(0));
-            player.score = 0;
+            player.score;
             updateScore();
             clear.play();
         }

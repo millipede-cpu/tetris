@@ -7,14 +7,20 @@
     <title>Tetris</title>
     </head>
     <body>
-
+        <section id="instructions">
+        <p id="text">
+        Welcome to Tetris! To play on laptop or desktop use the Arrow keys, 
+        Up, Down, Left and Right to move the Tetromino shapes around
+        </p>
+    </section>
         <div id="score"></div>
         <button id="pause">Pause</button>
+        
         <audio id="move" src="sfx/moveshape.mp3"></audio>
         <audio id="clear" src="sfx/rowclear.mp3"></audio>
         <audio id="game-over" src="sfx/gameover.mp3"></audio>
         <canvas id="tetris" width="240" height="400"></canvas>
-
+        
         <script src="app.js" charset="utf-8"></script>
     </body>
     </html>
