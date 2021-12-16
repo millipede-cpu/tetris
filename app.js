@@ -158,7 +158,7 @@ pause.addEventListener('click', () => {
                         (player.matrix[0].length / 2 | 0);
         if(collide(arena, player)) {
             arena.forEach(row => row.fill(0));
-            player.score;
+            player.score = 0;
             updateScore();
             clear.play();
         }
@@ -235,7 +235,7 @@ pause.addEventListener('click', () => {
     const player = {
         pos: {x : 0, y : 0},
         matrix : null,
-        score : 'Score : 0',
+        score : 0,
     }
 
     document.addEventListener('keydown', event => {
@@ -246,6 +246,7 @@ pause.addEventListener('click', () => {
         } else if (event.key === 'ArrowDown') {
             playerDrop();
         } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
             playerRotate(-1);
         }
     })
