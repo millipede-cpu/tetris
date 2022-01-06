@@ -9,12 +9,15 @@
     <body>
         <section id="instructions">
             <p id="text">
-            Welcome to Tetris! To play on laptop or desktop use the Arrow keys, 
-            Up, Down, Left and Right to move the Tetromino shapes around
+            Welcome to Tetris! To move shapes use the arrow keys, 
+            UP, DOWN, LEFT and RIGHT<br>
+            For every row cleared you score 10 points<br>
+            The game will automatically reset if the shapes stack up to the top
             </p>
+            <div id="score"></div>
+            <button id="pause">Pause</button>
         </section>
-        <div id="score"></div>
-        <button id="pause">Pause</button>
+    
         
         <audio id="move" src="sfx/moveshape.mp3"></audio>
         <audio id="clear" src="sfx/rowclear.mp3"></audio>
