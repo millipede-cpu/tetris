@@ -7,6 +7,6 @@ and see what to reference in keydown Event Listeners.
 
 I've also learnt some new ways to add sound effects to make it more interactive for the user, which I have achieved by putting sound effects inside audio tags in the html, accessing them with `querySelector()` in the Javascript and running these sound effects inside the functions where I want the sound to be heard with `.play()`
 
-I'm working on issues to make this Tetris game mobile responsive and make to get the pause button functionality working so that the user can pause the game
+I would like to make this Tetris game mobile responsive and add a pause button functionality.
 
 https://millipede-cpu.github.io/tetris/
